@@ -1,14 +1,14 @@
 package com.rafaelnunes.crud.services;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import javax.persistence.EntityNotFoundException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,9 +25,9 @@ public class ClientService {
 	private ClientRepository repository;
 	
 	@Transactional(readOnly = true)
-	public List<ClientDTO> findAll() {
-		List<Client> list = repository.findAll();
-		return list.stream().map(client -> new ClientDTO(client)).collect(Collectors.toList());
+	public Page<ClientDTO> findAllPaged(PageRequest request) {
+		Page<Client> list = repository.findAll(request);
+		return list.map(client -> new ClientDTO(client));
 	}
 	
 	@Transactional(readOnly = true)
@@ -40,12 +40,7 @@ public class ClientService {
 	@Transactional
 	public ClientDTO insert(ClientDTO clientDto) {
 		Client client = new Client();
-		client.setName(clientDto.getName());
-		client.setCpf(clientDto.getCpf());
-		client.setIncome(clientDto.getIncome());
-		client.setBirthDate(clientDto.getBirthDate());
-		client.setChildren(clientDto.getChildren());
-		
+		copyDtoToEntity(client, clientDto);
 		client = repository.save(client);
 		
 		return new ClientDTO(client);
@@ -55,11 +50,7 @@ public class ClientService {
 	public ClientDTO update(Long id, ClientDTO clientDto) {
 		try {
 			Client client = repository.getReferenceById(id);
-			client.setName(clientDto.getName());
-			client.setCpf(clientDto.getCpf());
-			client.setIncome(clientDto.getIncome());
-			client.setBirthDate(clientDto.getBirthDate());
-			client.setChildren(clientDto.getChildren());
+			copyDtoToEntity(client, clientDto);
 			
 			client = repository.save(client);
 			
@@ -82,4 +73,11 @@ public class ClientService {
 		}
 	}
 	
+	private void copyDtoToEntity(Client client, ClientDTO clientDto) {
+		client.setName(clientDto.getName());
+		client.setCpf(clientDto.getCpf());
+		client.setIncome(clientDto.getIncome());
+		client.setBirthDate(clientDto.getBirthDate());
+		client.setChildren(clientDto.getChildren());
+	}
 }
